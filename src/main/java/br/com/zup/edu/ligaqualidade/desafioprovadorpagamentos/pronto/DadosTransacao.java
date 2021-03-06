@@ -5,7 +5,6 @@ import java.time.LocalDate;
 
 public class DadosTransacao {
 
-
     public final BigDecimal valor;
     public final MetodoPagamento metodo;
     public final String numero;
@@ -24,6 +23,5 @@ public class DadosTransacao {
         this.cvv = cvv;
         this.id = id;
     }
-
 
 }

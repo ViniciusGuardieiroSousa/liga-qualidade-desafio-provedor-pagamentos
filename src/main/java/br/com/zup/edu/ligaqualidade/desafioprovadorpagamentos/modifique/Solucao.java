@@ -1,8 +1,13 @@
 package br.com.zup.edu.ligaqualidade.desafioprovadorpagamentos.modifique;
 
+
+import br.com.zup.edu.ligaqualidade.desafioprovadorpagamentos.modifique.data.*;
+import br.com.zup.edu.ligaqualidade.desafioprovadorpagamentos.modifique.data.payment.*;
+import br.com.zup.edu.ligaqualidade.desafioprovadorpagamentos.modifique.factory.*;
+
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 public class Solucao {
@@ -32,72 +37,40 @@ public class Solucao {
      */
 
 
-    //7
     public static List<String[]> executa(List<String> infoTransacoes, List<String> infoAdiantamentos) {
+        List<String[]> result = new ArrayList<>();
 
-        //1
-        TransacaoParaRecebivel transacaoParaRecebivel = null;
+        HashMap<String, Double> anticipatedEntry = convertListOnHashMap(infoAdiantamentos);
 
-        //1
-        AdiantamentoParaRecebivel adiantamentoParaRecebivel;
-
-        List<String> transacoes = new ArrayList<>();
-        List<String> adiantamentos = new ArrayList<>();
-
-        /*
-         * Quebra o String num array
-         * */
-        //1
-        for (String info : infoTransacoes) {
-            transacoes = Arrays.asList(info.split(","));
+        for (String infoTransacoe : infoTransacoes) {
+            String[] split = infoTransacoe.split(",");
+            Double value = Double.parseDouble(split[0]);
+            String paymentMethod = split[1];
+            String id = split[6];
+            Double anticipatedRate = anticipatedEntry.get(id);
+            Card card = createCard(split);
+            Payment payment = PaymentFactory.payment(anticipatedRate, value, card, paymentMethod);
+            result.add(payment.transactionStatus());
         }
 
-        //1
-        for (String info : infoAdiantamentos) {
-            adiantamentos = Arrays.asList(info.split(","));
-        }
-
-
-        /*
-         * Transforma a String em dados manipuláveis
-         * */
-        //1
-        for (int j = 0; j < transacoes.size(); j++) {
-
-            String valorNaoDecimal = transacoes.get(0);
-            String metodo = transacoes.get(1);
-            String validadeNaoData = transacoes.get(4);
-
-            transacaoParaRecebivel = new TransacaoParaRecebivel(valorNaoDecimal, metodo, validadeNaoData);
-        }
-
-        //1
-        for (int k = 0; k < adiantamentos.size(); k++) {
-            String idTransacaoString = adiantamentos.get(0);
-            String taxaNaoDecimal = adiantamentos.get(1);
-
-            adiantamentoParaRecebivel = new AdiantamentoParaRecebivel(idTransacaoString, taxaNaoDecimal);
-
-        }
-
-        /*
-         * Início da criação do recebível
-         * */
-        //1
-        Recebivel recebivel = criaRecebivel(transacaoParaRecebivel);
-        recebivel.prazoRecebimento();
-
-        return List.of(new String[][]{
-                {"pago", "200", "194", "04/03/2021"}
-        });
-
-
+        return result;
     }
 
-    private static Recebivel criaRecebivel(TransacaoParaRecebivel transacao) {
-
-        return new Recebivel(transacao.getMetodoPagamento(), transacao.getValidade(), transacao.getValor());
+    private static HashMap<String, Double> convertListOnHashMap(List<String> infoAdiantamentos) {
+        HashMap<String, Double> map = new HashMap<>();
+        for (String infoAdiantamento : infoAdiantamentos) {
+            String[] split = infoAdiantamento.split(",");
+            Double rate = Double.parseDouble(split[1]);
+            map.put(split[0], rate);
+        }
+        return map;
     }
 
-
+    private static Card createCard(String[] split) {
+        String cardNumber = split[2];
+        String cardName = split[3];
+        String cardValidation = split[4];
+        String cardCVV = split[5];
+        return new Card(cardValidation, cardNumber, cardName, cardCVV);
+    }
 }
